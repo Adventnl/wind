@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-server/
+release/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+android/.gradle/
+android/local.properties
+android/**/build/
+ios/App/Pods/
+ios/App/build/
+*.log
+# Native signing credentials
+*.jks
+*.keystore
+*.p12
+*.mobileprovision

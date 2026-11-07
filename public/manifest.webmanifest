@@ -1,0 +1,24 @@
+{
+  "id": "/",
+  "name": "Wind",
+  "short_name": "Wind",
+  "description": "A little closer. Private peer-to-peer messaging.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#16191d",
+  "theme_color": "#16191d",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

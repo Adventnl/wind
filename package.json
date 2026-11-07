@@ -1,0 +1,90 @@
+{
+  "name": "wind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A little closer. Private peer-to-peer messaging and calls.",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
+    "build": "tsc --noEmit && vite build && node scripts/prepare-web.mjs && esbuild server/index.ts --bundle --platform=node --packages=external --format=esm --outfile=dist-server/index.js",
+    "start": "node dist-server/index.js",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "desktop": "electron .",
+    "desktop:package": "npm run build && electron-builder",
+    "mobile:sync": "npm run build && cap sync",
+    "mobile:android": "cap open android",
+    "mobile:ios": "cap open ios",
+    "icons": "node scripts/generate-icons.mjs",
+    "format": "prettier --write src shared server scripts tests electron *.ts *.json index.html README.md public/sw.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/ios": "^7.4.0",
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.0",
+    "@playwright/test": "^1.56.0",
+    "@types/express": "^5.0.5",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.1",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.12",
+    "prettier": "^3.9.10",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.0"
+  },
+  "build": {
+    "appId": "chat.wind.app",
+    "productName": "Wind",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.social-networking",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Wind uses your microphone for encrypted calls.",
+        "NSCameraUsageDescription": "Wind uses your camera for encrypted video calls."
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "icon": "electron/icon.png"
+  },
+  "overrides": {
+    "minimatch@>=7 <11.0.1": "^11.0.5"
+  }
+}

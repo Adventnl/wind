@@ -1,0 +1,5 @@
+# Store Caddy application data on the HDD and add RequiresMountsFor=/srv/storage
+# to its systemd unit before running it on this machine.
+wind.example.com {
+    reverse_proxy 127.0.0.1:3001
+}

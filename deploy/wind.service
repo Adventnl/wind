@@ -1,0 +1,31 @@
+[Unit]
+Description=Wind peer signaling and web app
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/srv/storage
+
+[Service]
+Type=simple
+User=adventnl
+Group=adventnl
+WorkingDirectory=/srv/storage/repos/wind
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3001
+EnvironmentFile=-/srv/storage/data/wind/server.env
+ExecStartPre=/usr/bin/mountpoint -q /srv/storage
+ExecStart=/usr/bin/node /srv/storage/repos/wind/dist-server/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+UMask=0077
+# Wind signaling is memory-only. No application state is written to disk.
+
+[Install]
+WantedBy=multi-user.target

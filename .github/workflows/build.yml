@@ -1,0 +1,119 @@
+name: Validate and build Wind
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install and validate
+        shell: bash
+        run: |
+          export npm_config_cache="$RUNNER_TEMP/npm-cache"
+          export ELECTRON_CACHE="$RUNNER_TEMP/electron"
+          export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/playwright"
+          npm ci
+          npm test
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-test-results
+          path: test-results
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build unsigned desktop app
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          VITE_SIGNAL_URL: ${{ vars.WIND_SIGNAL_URL }}
+        run: |
+          export npm_config_cache="$RUNNER_TEMP/npm-cache"
+          export ELECTRON_CACHE="$RUNNER_TEMP/electron"
+          export ELECTRON_BUILDER_CACHE="$RUNNER_TEMP/electron-builder"
+          npm ci
+          npm run desktop:package -- --${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wind-${{ matrix.platform }}-unsigned
+          path: |
+            release/*.dmg
+            release/*.exe
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        shell: bash
+        env:
+          VITE_SIGNAL_URL: ${{ vars.WIND_SIGNAL_URL }}
+        run: |
+          export npm_config_cache="$RUNNER_TEMP/npm-cache"
+          export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+          export GRADLE_USER_HOME="$RUNNER_TEMP/gradle"
+          npm ci
+          npm run mobile:sync
+          chmod +x android/gradlew
+          android/gradlew -p android assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wind-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build unsigned simulator app
+        shell: bash
+        env:
+          VITE_SIGNAL_URL: ${{ vars.WIND_SIGNAL_URL }}
+        run: |
+          export npm_config_cache="$RUNNER_TEMP/npm-cache"
+          export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+          npm ci
+          npm run mobile:sync
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath "$RUNNER_TEMP/wind-ios" CODE_SIGNING_ALLOWED=NO build
+          mkdir -p release
+          ditto -c -k --keepParent "$RUNNER_TEMP/wind-ios/Build/Products/Debug-iphonesimulator/App.app" release/Wind-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wind-ios-simulator
+          path: release/Wind-ios-simulator.zip
